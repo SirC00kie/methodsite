@@ -1,0 +1,130 @@
+{% extends 'layout/basic.html'  %}
+
+{% block title %} Заполнение матриц {% endblock %}
+
+{% block content  %}
+<form method="post">
+    {% csrf_token %}
+    <h1>Заполнение матриц</h1>
+    <div class="layer1">
+        <h3>Матрица стехиометрических коэффициентов</h3>
+        <table id="stehCoef"></table>
+        <h3>Матрица показателей степени</h3>
+        <table id="pokStep"></table>
+        <p>
+            <input href="{% url 'result' %}" id="solution" type="button" value="Расчёт" onClick='location.href="{% url 'result' %}"'>
+
+            <select id="methodName">
+                <option disabled>Выберите метод</option>
+                <option value="Euler">Метод Эйлера</option>
+                <option value="RungeKuttaSecond">Метод Рунге-Кутта 2-го порядка</option>
+                <option value="RungeKuttaFourth">Метод Рунге-Кутта 4-го порядка</option>
+            </select>
+        </p>
+        <a href = "{% url 'result' %}">Результаты</a>
+    </div>
+    <div class="layer2">
+        <h3>Экспериментальные данные</h3>
+        <table id="expData"></table>
+        <h3> Константы скорости</h3>
+        <table id="constSpeed"></table>
+    </div>
+</form>
+
+    <script type="text/javascript">
+        const stehCoef = document.getElementById('stehCoef');
+        const pokStep = document.getElementById('pokStep');
+        const expData = document.getElementById('expData');
+        const constSpeed = document.getElementById('constSpeed');
+        const inputSolution = document.getElementById('solution');
+        const methodName = document.getElementById('methodName');
+
+        window.onload = function () {
+
+            function fillTable(table, tableRows, tableColumns) {
+                for (var i = 0; i < tableRows + 1; i++) {
+                    var tr = document.createElement('tr');
+                    for (var j = 0; j < tableColumns + 1; j++) {
+                        var td = document.createElement('td');
+                        tr.appendChild(td);
+                        var jj = j-1;
+                        if ((i == 0) && (table == expData) && (j == 1)) td.innerHTML = "t";
+                        else if ((i == 0) && (table != constSpeed) && (table != expData)) td.innerHTML = "A" + j;
+                        else if ((i == 0) && (table == constSpeed)) td.innerHTML = "Константы";
+                        else if ((i == 0) && (table == expData)) td.innerHTML = "A" + jj;
+                        if ((j == 0) && (i!=0) )td.innerHTML = i;
+                        else if ((j == 0) && (i==0)) td.innerHTML = "№";
+                    }
+
+                    table.appendChild(tr);
+                }
+                var td = document.querySelectorAll('td');
+            }
+
+            function changeValue(event){
+                var target = event.target;
+                target.setAttribute("contenteditable", true);
+            }
+
+            {% for m in matrix %}
+            fillTable(stehCoef, {{ m.stages }},{{ m.components }});
+            fillTable(pokStep, {{ m.stages }},{{ m.components }});
+            fillTable(expData, {{ m.experients }},{{ m.components}} + 1);
+            fillTable(constSpeed, {{ m.stages }},1);
+            {% endfor %}
+
+            stehCoef.addEventListener("click", changeValue);
+            pokStep.addEventListener("click", changeValue);
+            expData.addEventListener("click", changeValue);
+            constSpeed.addEventListener("click", changeValue);
+
+        }
+
+        function tableToJson(table) {
+            var tableArray = new Array();
+            const tr = table.querySelectorAll('tr');
+            for (var i = 1; i < tr.length; i++) {
+                tableArray[i] = new Array();
+                for (var j = 1; j < tr[i].children.length; j++) {
+                    if(tr[i].children[j].innerHTML == ''){
+                        tableArray[i][j] = 0;
+                    }
+                    else tableArray[i][j] = tr[i].children[j].innerHTML;
+
+                }
+            }
+            return tableArray;
+        }
+
+        function FullTable(T1,T2,T3,T4){
+            var T = T1+T2+T3+T4;
+            console.log(T)
+            return T
+        }
+
+        getMethodName = function() {
+            var name = methodName.value;
+            return name
+        }
+
+        inputSolution.addEventListener('click', () => FullTable(tableToJson(stehCoef), tableToJson(pokStep),tableToJson(expData),tableToJson(constSpeed)));
+        inputSolution.addEventListener('click', () => getMethodName());
+
+
+
+        $(document).ready(function (){
+            var csrf = $("input[name=csrfmiddlewaretoken]").val();
+            $('#solution').click(function () {
+                $.ajax({
+                    url:'',
+                    type: 'post',
+                    data:{
+                        data_table: FullTable(tableToJson(stehCoef), tableToJson(pokStep),tableToJson(expData),tableToJson(constSpeed)),
+                        method_name: getMethodName(),
+                        csrfmiddlewaretoken: csrf
+                    },
+                })
+            })
+        });
+    </script>
+{% endblock  %}

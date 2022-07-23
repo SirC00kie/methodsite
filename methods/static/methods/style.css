@@ -1,0 +1,44 @@
+table{
+    width: 70%;
+    border: 1px solid;
+    border-color: black;
+    border-collapse: collapse;
+    margin-top:20px;
+}
+table#constSpeed{
+    width: 15%;
+}
+table{
+
+}
+th{
+    height: 50px;
+    border: 1px solid;
+
+}
+td {
+    height: 30px;
+    text-align: center;
+    border: 1px solid;
+}
+H1 {
+    font-size: 120%;
+    font-family: Verdana, Arial, Helvetica, sans-serif;
+    color: green;
+}
+button{
+    width: 200px;
+    height: 50px;
+    background-color: #5b80b2;
+    margin-left: 300px;
+}
+div.layer1 {
+    padding: 5px; /* Поля вокруг текста */
+    float: left;
+    width: 600px; /* Ширина слоя */
+}
+div.layer2 {
+    padding: 5px; /* Поля вокруг текста */
+    width: 600px; /* Ширина слоя */
+    float: left;
+}

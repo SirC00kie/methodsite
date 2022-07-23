@@ -1,0 +1,20 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Главная{% endblock %} :: Главная</title>
+    {% static 'methods/style.css' as css_url %}
+    <link rel="stylesheet" type="text/css" href="{{ css_url }}">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <a href = "{% url 'index' %}">Главная</a>
+    <a href = "{% url 'add' %}">Записать уравнение</a>
+    <section>
+        {% block content %}
+        {% endblock %}
+    </section>
+</body>
+</html>
