@@ -1,10 +1,10 @@
 from django.shortcuts import render, redirect
 from django.views.generic.edit import CreateView
-from django.urls import reverse_lazy,reverse
+from django.urls import reverse_lazy, reverse
 import json
 
 from .file_service import write_table_to_file, NumpyEncoder, write_to_file, read_from_file
-from .methods_service import method_Euler, method_RungeKuttaSecond, method_RungeKuttaFourth,  array_to_matrix_dictionary, experients_table
+from .methods_service import FunctionCalculate, BaseMethods
 
 from .forms import MatrixForm
 from .models import Matrix
@@ -24,26 +24,40 @@ def tables(request):
     else:
         matrix = Matrix.objects.all()
         context = {'matrix': matrix}
-        return render (request, 'methods/tables.html', context)
+        return render(request, 'methods/tables.html', context)
+
 
 def result(request):
     methodName = read_from_file('methods/static/methods/json/method_name.json')
-    data = eval("method_" + methodName)()
-    dict = {"Euler":"Эйлера","RungeKuttaSecond":"Рунге-Кутта 2-го порядка","RungeKuttaFourth":"Рунге-Кутта 4-го порядка"}
-    exp_table = experients_table()
-    json_dump = json.dumps({'data': data},
+    baseMethod = BaseMethods()
+    functionCalculate = FunctionCalculate()
+    dataMethod = None
+
+    if methodName == "Euler":
+        dataMethod = baseMethod.method_euler()
+
+    elif methodName == "RungeKuttaSecond":
+        dataMethod = baseMethod.method_runge_kutta_second()
+
+    elif methodName == "RungeKuttaFourth":
+        dataMethod = baseMethod.method_runge_kutta_fourth()
+
+    dict = {"Euler": "Эйлера", "RungeKuttaSecond": "Рунге-Кутта 2-го порядка", "RungeKuttaFourth": "Рунге-Кутта 4-го порядка"}
+    exp_table = functionCalculate.table['expDat']
+    json_dump = json.dumps({'data': dataMethod},
                            cls=NumpyEncoder)
     json_exp = json.dumps({'exp_table': exp_table},
                            cls=NumpyEncoder)
     matrix = Matrix.objects.all()
     context={
-        'data': data,
+        'data': dataMethod,
         'json_dump': json_dump,
         'json_exp':json_exp,
         'matrix': matrix,
         'method_name': dict[methodName],
     }
     return render (request, 'methods/result.html', context)
+
 
 class MatrixCreateView(CreateView):
     template_name = 'methods/create.html'
