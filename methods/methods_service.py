@@ -1,31 +1,23 @@
 import numpy as np
 from .models import Matrix
-from .file_service import read_table_to_array
 
 
-class FunctionCalculate:
-    array = read_table_to_array('methods/static/methods/json/tables.json')
+class FunctionCalculate():
     matrixParam = dict()
     table = dict()
 
-    matrixParam['stages'] = Matrix._meta.get_field('stages').value_from_object(Matrix.objects.first())
-    matrixParam['components'] = Matrix._meta.get_field('components').value_from_object(Matrix.objects.first())
-    matrixParam['experients'] = Matrix._meta.get_field('experients').value_from_object(Matrix.objects.first())
-    matrixParam['step'] = Matrix._meta.get_field('step').value_from_object(Matrix.objects.first())
-
-    table['stehCoef'] = array[:matrixParam['stages'] * matrixParam['components']]
-    table['pokazStep'] = array[
-                              matrixParam['stages'] * matrixParam['components']:matrixParam['stages'] * matrixParam[
-                                  'components'] * 2]
-    table['expDat'] = array[
-                           matrixParam['stages'] * matrixParam['components'] * 2: matrixParam['stages'] * matrixParam[
-                               'components'] * 2 + matrixParam['experients'] * (matrixParam['components'] + 1)]
-    table['constSpeed'] = array[
-                               matrixParam['stages'] * matrixParam['components'] * 2 + matrixParam['experients'] * (
-                                       matrixParam['components'] + 1):]
+    def __init__(self, arr):
+        self.array_table = arr
+        self.matrixParam['stages'] = Matrix._meta.get_field('stages').value_from_object(Matrix.objects.first())
+        self.matrixParam['components'] = Matrix._meta.get_field('components').value_from_object(Matrix.objects.first())
+        self.matrixParam['experients'] = Matrix._meta.get_field('experients').value_from_object(Matrix.objects.first())
+        self.matrixParam['step'] = Matrix._meta.get_field('step').value_from_object(Matrix.objects.first())
+        self.table['stehCoef'] = self.array_table[:self.matrixParam['stages'] * self.matrixParam['components']]
+        self.table['pokazStep'] = self.array_table[self.matrixParam['stages'] * self.matrixParam['components']:self.matrixParam['stages'] * self.matrixParam['components'] * 2]
+        self.table['expDat'] = self.array_table[self.matrixParam['stages'] * self.matrixParam['components'] * 2: self.matrixParam['stages'] * self.matrixParam['components'] * 2 + self.matrixParam['experients'] * (self.matrixParam['components'] + 1)]
+        self.table['constSpeed'] = self.array_table[self.matrixParam['stages'] * self.matrixParam['components'] * 2 + self.matrixParam['experients'] * (self.matrixParam['components'] + 1):]
 
     def system_diff_equation(self, y):
-
         A = np.zeros(self.matrixParam['components'])
         sumA = np.zeros(self.matrixParam['components'])
         r = np.zeros(self.matrixParam['stages'])
@@ -47,7 +39,8 @@ class FunctionCalculate:
 
 
 class BaseMethods(FunctionCalculate):
-    def __init__(self):
+    def __init__(self, arr):
+        super().__init__(arr)
         self.t = self.table['expDat'][1]
         self.h = self.matrixParam['step']
         self.n = int(self.table['expDat'][
@@ -103,3 +96,13 @@ class BaseMethods(FunctionCalculate):
 
         elif methodName == "RungeKuttaFourth":
             return self.method_runge_kutta_fourth()
+
+    def method_name_selection(self, methodName: str ):
+        if methodName == "Euler":
+            return "Эйлера"
+
+        elif methodName == "RungeKuttaSecond":
+            return "Рунге-Кутта 2-го порядка"
+
+        elif methodName == "RungeKuttaFourth":
+            return "Рунге-Кутта 4-го порядка"

@@ -3,7 +3,7 @@ from django.views.generic.edit import CreateView
 from django.urls import reverse_lazy, reverse
 import json
 
-from .file_service import write_table_to_file, NumpyEncoder, write_to_file, read_from_file
+from .file_service import write_table_to_file, NumpyEncoder, write_to_file, read_from_file, read_table_to_array
 from .methods_service import FunctionCalculate, BaseMethods
 
 from .forms import MatrixForm
@@ -29,11 +29,12 @@ def tables(request):
 
 def result(request):
     methodName = read_from_file('methods/static/methods/json/method_name.json')
-    baseMethod = BaseMethods()
-    functionCalculate = FunctionCalculate()
+    array = read_table_to_array('methods/static/methods/json/tables.json')
+    baseMethod = BaseMethods(array)
+    functionCalculate = FunctionCalculate(array)
     dataMethod = baseMethod.method_selection(methodName)
 
-    dict = {"Euler": "Эйлера", "RungeKuttaSecond": "Рунге-Кутта 2-го порядка", "RungeKuttaFourth": "Рунге-Кутта 4-го порядка"}
+    method_name = baseMethod.method_name_selection(methodName)
     exp_table = functionCalculate.table['expDat']
     json_dump = json.dumps({'data': dataMethod},
                            cls=NumpyEncoder)
@@ -43,9 +44,9 @@ def result(request):
     context={
         'data': dataMethod,
         'json_dump': json_dump,
-        'json_exp':json_exp,
+        'json_exp': json_exp,
         'matrix': matrix,
-        'method_name': dict[methodName],
+        'method_name': method_name,
     }
     return render (request, 'methods/result.html', context)
 
