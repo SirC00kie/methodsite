@@ -31,16 +31,7 @@ def result(request):
     methodName = read_from_file('methods/static/methods/json/method_name.json')
     baseMethod = BaseMethods()
     functionCalculate = FunctionCalculate()
-    dataMethod = None
-
-    if methodName == "Euler":
-        dataMethod = baseMethod.method_euler()
-
-    elif methodName == "RungeKuttaSecond":
-        dataMethod = baseMethod.method_runge_kutta_second()
-
-    elif methodName == "RungeKuttaFourth":
-        dataMethod = baseMethod.method_runge_kutta_fourth()
+    dataMethod = baseMethod.method_selection(methodName)
 
     dict = {"Euler": "Эйлера", "RungeKuttaSecond": "Рунге-Кутта 2-го порядка", "RungeKuttaFourth": "Рунге-Кутта 4-го порядка"}
     exp_table = functionCalculate.table['expDat']
