@@ -94,3 +94,12 @@ class BaseMethods(FunctionCalculate):
                 y[i + 1, j + 1] = y[i, j + 1] + (self.h / 6) * (K1 + 2 * K2 + 2 * K3 + K4)
         return y
 
+    def method_selection(self, methodName: str ):
+        if methodName == "Euler":
+            return self.method_euler()
+
+        elif methodName == "RungeKuttaSecond":
+            return self.method_runge_kutta_second()
+
+        elif methodName == "RungeKuttaFourth":
+            return self.method_runge_kutta_fourth()
