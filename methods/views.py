@@ -4,7 +4,7 @@ from django.urls import reverse_lazy, reverse
 import json
 
 from .file_service import write_table_to_file, NumpyEncoder, write_to_file, read_from_file, read_table_to_array
-from .methods_service import FunctionCalculate, BaseMethods
+from .methods_service import BaseMethods
 
 from .forms import MatrixForm
 from .models import Matrix
@@ -31,11 +31,9 @@ def result(request):
     methodName = read_from_file('methods/static/methods/json/method_name.json')
     array = read_table_to_array('methods/static/methods/json/tables.json')
     baseMethod = BaseMethods(array)
-    functionCalculate = FunctionCalculate(array)
     dataMethod = baseMethod.method_selection(methodName)
-
     method_name = baseMethod.method_name_selection(methodName)
-    exp_table = functionCalculate.table['expDat']
+    exp_table = baseMethod.table['expDat']
     json_dump = json.dumps({'data': dataMethod},
                            cls=NumpyEncoder)
     json_exp = json.dumps({'exp_table': exp_table},

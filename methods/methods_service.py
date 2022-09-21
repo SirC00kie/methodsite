@@ -13,8 +13,8 @@ class FunctionCalculate():
         self.matrixParam['experients'] = Matrix._meta.get_field('experients').value_from_object(Matrix.objects.first())
         self.matrixParam['step'] = Matrix._meta.get_field('step').value_from_object(Matrix.objects.first())
         self.table['stehCoef'] = self.array_table[:self.matrixParam['stages'] * self.matrixParam['components']]
-        self.table['pokazStep'] = self.array_table[self.matrixParam['stages'] * self.matrixParam['components']:self.matrixParam['stages'] * self.matrixParam['components'] * 2]
-        self.table['expDat'] = self.array_table[self.matrixParam['stages'] * self.matrixParam['components'] * 2: self.matrixParam['stages'] * self.matrixParam['components'] * 2 + self.matrixParam['experients'] * (self.matrixParam['components'] + 1)]
+        self.table['pokazStep'] = self.array_table[self.matrixParam['stages'] * self.matrixParam['components']:self.matrixParam['stages'] *self.matrixParam['components'] * 2]
+        self.table['expDat'] = self.array_table[self.matrixParam['stages'] * self.matrixParam['components'] * 2: self.matrixParam['stages'] *self.matrixParam['components'] * 2 +self.matrixParam['experients'] * (self.matrixParam['components'] + 1)]
         self.table['constSpeed'] = self.array_table[self.matrixParam['stages'] * self.matrixParam['components'] * 2 + self.matrixParam['experients'] * (self.matrixParam['components'] + 1):]
 
     def system_diff_equation(self, y):
@@ -27,8 +27,7 @@ class FunctionCalculate():
             sumR[i] = self.table['constSpeed'][i]
             for j in range(0, self.matrixParam['components']):
                 if self.table['pokazStep'][j + (i * self.matrixParam['components'])] != 0:
-                    r[i] = y[j] ** self.table['pokazStep'][
-                        j + (i * self.matrixParam['components'])]
+                    r[i] = y[j] ** self.table['pokazStep'][j + (i * self.matrixParam['components'])]
                     sumR[i] *= r[i]
 
         for i in range(0, self.matrixParam['components']):
@@ -66,6 +65,36 @@ class BaseMethods(FunctionCalculate):
                 y[i + 1, j + 1] = y[i, j + 1] + self.h * self.system_diff_equation(y[i, 1:])[j]
         return y
 
+    def implicit_method_euler(self):
+        y = self.method()
+        y_n = self.method()
+
+        for i in range(0, self.steps, 1):
+            for j in range(self.matrixParam['components']):
+                y_n[i + 1, j + 1] = y[i, j + 1] + self.h * self.system_diff_equation(y[i, 1:])[j]
+                y[i + 1, j + 1] = y[i, j + 1] + self.h * self.system_diff_equation(y_n[i+1, 1:])[j]
+        return y
+
+    def method_trapezoid(self):
+        y = self.method()
+        y_n = self.method()
+
+        for i in range(0, self.steps, 1):
+            for j in range(self.matrixParam['components']):
+                y_n[i + 1, j + 1] = y[i, j + 1] + self.h * self.system_diff_equation(y[i, 1:])[j]
+                y[i + 1, j + 1] = y[i, j + 1] + (self.h / 2) * (self.system_diff_equation(y_n[i+1, 1:])[j] + self.system_diff_equation(y[i, 1:])[j])
+        return y
+
+    def method_middle_point(self):
+        y = self.method()
+        y_n = self.method()
+
+        for i in range(0, self.steps, 1):
+            for j in range(self.matrixParam['components']):
+                y_n[i + 1, j + 1] = y[i, j + 1] + self.h * self.system_diff_equation(y[i, 1:])[j]
+                y[i + 1, j + 1] = y[i, j + 1] + self.h * self.system_diff_equation((y_n[i+1, 1:] + y[i, 1:]) / 2)[j]
+        return y
+
     def method_runge_kutta_second(self):
         y = self.method()
         for i in range(0, self.steps, 1):
@@ -87,9 +116,18 @@ class BaseMethods(FunctionCalculate):
                 y[i + 1, j + 1] = y[i, j + 1] + (self.h / 6) * (K1 + 2 * K2 + 2 * K3 + K4)
         return y
 
-    def method_selection(self, methodName: str ):
+    def method_selection(self, methodName: str):
         if methodName == "Euler":
             return self.method_euler()
+
+        elif methodName == "ImplicitEuler":
+            return self.implicit_method_euler()
+
+        elif methodName == "Trapezoid":
+            return self.method_trapezoid()
+
+        elif methodName == "MiddlePoint":
+            return self.method_middle_point()
 
         elif methodName == "RungeKuttaSecond":
             return self.method_runge_kutta_second()
@@ -97,9 +135,18 @@ class BaseMethods(FunctionCalculate):
         elif methodName == "RungeKuttaFourth":
             return self.method_runge_kutta_fourth()
 
-    def method_name_selection(self, methodName: str ):
+    def method_name_selection(self, methodName: str):
         if methodName == "Euler":
             return "Эйлера"
+
+        elif methodName == "ImplicitEuler":
+            return "Эйлера неявным"
+
+        elif methodName == "Trapezoid":
+            return "Трапеций"
+
+        elif methodName == "MiddlePoint":
+            return "Средней точки"
 
         elif methodName == "RungeKuttaSecond":
             return "Рунге-Кутта 2-го порядка"

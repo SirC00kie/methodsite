@@ -19,6 +19,9 @@
                 <option value="Euler">Метод Эйлера</option>
                 <option value="RungeKuttaSecond">Метод Рунге-Кутта 2-го порядка</option>
                 <option value="RungeKuttaFourth">Метод Рунге-Кутта 4-го порядка</option>
+                <option value="ImplicitEuler">Метод Эйлера неявный</option>
+                <option value="Trapezoid">Метод Трапеций</option>
+                <option value="MiddlePoint">Метод Средней точки</option>
             </select>
         </p>
         <a href = "{% url 'result' %}">Результаты</a>
@@ -109,8 +112,6 @@
 
         inputSolution.addEventListener('click', () => FullTable(tableToJson(stehCoef), tableToJson(pokStep),tableToJson(expData),tableToJson(constSpeed)));
         inputSolution.addEventListener('click', () => getMethodName());
-
-
 
         $(document).ready(function (){
             var csrf = $("input[name=csrfmiddlewaretoken]").val();
