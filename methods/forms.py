@@ -5,4 +5,4 @@ from .models import Matrix
 class MatrixForm(ModelForm):
     class Meta:
         model = Matrix
-        fields = {'stages', 'components','experients', 'step'}
+        fields = {'stages', 'components', 'experients', 'step'}

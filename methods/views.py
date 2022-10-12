@@ -33,6 +33,7 @@ def result(request):
     baseMethod = BaseMethods(array)
     dataMethod = baseMethod.method_selection(methodName)
     method_name = baseMethod.method_name_selection(methodName)
+    print(baseMethod.methods_all())
     exp_table = baseMethod.table['expDat']
     json_dump = json.dumps({'data': dataMethod},
                            cls=NumpyEncoder)

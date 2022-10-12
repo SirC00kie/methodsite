@@ -13,9 +13,23 @@ class FunctionCalculate():
         self.matrixParam['experients'] = Matrix._meta.get_field('experients').value_from_object(Matrix.objects.first())
         self.matrixParam['step'] = Matrix._meta.get_field('step').value_from_object(Matrix.objects.first())
         self.table['stehCoef'] = self.array_table[:self.matrixParam['stages'] * self.matrixParam['components']]
-        self.table['pokazStep'] = self.array_table[self.matrixParam['stages'] * self.matrixParam['components']:self.matrixParam['stages'] *self.matrixParam['components'] * 2]
-        self.table['expDat'] = self.array_table[self.matrixParam['stages'] * self.matrixParam['components'] * 2: self.matrixParam['stages'] *self.matrixParam['components'] * 2 +self.matrixParam['experients'] * (self.matrixParam['components'] + 1)]
-        self.table['constSpeed'] = self.array_table[self.matrixParam['stages'] * self.matrixParam['components'] * 2 + self.matrixParam['experients'] * (self.matrixParam['components'] + 1):]
+        self.table['pokazStep'] = self.array_table[
+                                  self.matrixParam['stages'] * self.matrixParam['components']:self.matrixParam[
+                                                                                                  'stages'] *
+                                                                                              self.matrixParam[
+                                                                                                  'components'] * 2]
+        self.table['expDat'] = self.array_table[
+                               self.matrixParam['stages'] * self.matrixParam['components'] * 2: self.matrixParam[
+                                                                                                    'stages'] *
+                                                                                                self.matrixParam[
+                                                                                                    'components'] * 2 +
+                                                                                                self.matrixParam[
+                                                                                                    'experients'] * (
+                                                                                                            self.matrixParam[
+                                                                                                                'components'] + 1)]
+        self.table['constSpeed'] = self.array_table[
+                                   self.matrixParam['stages'] * self.matrixParam['components'] * 2 + self.matrixParam[
+                                       'experients'] * (self.matrixParam['components'] + 1):]
 
     def system_diff_equation(self, y):
         A = np.zeros(self.matrixParam['components'])
@@ -72,7 +86,7 @@ class BaseMethods(FunctionCalculate):
         for i in range(0, self.steps, 1):
             for j in range(self.matrixParam['components']):
                 y_n[i + 1, j + 1] = y[i, j + 1] + self.h * self.system_diff_equation(y[i, 1:])[j]
-                y[i + 1, j + 1] = y[i, j + 1] + self.h * self.system_diff_equation(y_n[i+1, 1:])[j]
+                y[i + 1, j + 1] = y[i, j + 1] + self.h * self.system_diff_equation(y_n[i + 1, 1:])[j]
         return y
 
     def method_trapezoid(self):
@@ -82,7 +96,8 @@ class BaseMethods(FunctionCalculate):
         for i in range(0, self.steps, 1):
             for j in range(self.matrixParam['components']):
                 y_n[i + 1, j + 1] = y[i, j + 1] + self.h * self.system_diff_equation(y[i, 1:])[j]
-                y[i + 1, j + 1] = y[i, j + 1] + (self.h / 2) * (self.system_diff_equation(y_n[i+1, 1:])[j] + self.system_diff_equation(y[i, 1:])[j])
+                y[i + 1, j + 1] = y[i, j + 1] + (self.h / 2) * (
+                            self.system_diff_equation(y_n[i + 1, 1:])[j] + self.system_diff_equation(y[i, 1:])[j])
         return y
 
     def method_middle_point(self):
@@ -92,7 +107,7 @@ class BaseMethods(FunctionCalculate):
         for i in range(0, self.steps, 1):
             for j in range(self.matrixParam['components']):
                 y_n[i + 1, j + 1] = y[i, j + 1] + self.h * self.system_diff_equation(y[i, 1:])[j]
-                y[i + 1, j + 1] = y[i, j + 1] + self.h * self.system_diff_equation((y_n[i+1, 1:] + y[i, 1:]) / 2)[j]
+                y[i + 1, j + 1] = y[i, j + 1] + self.h * self.system_diff_equation((y_n[i + 1, 1:] + y[i, 1:]) / 2)[j]
         return y
 
     def method_runge_kutta_second(self):
@@ -153,3 +168,11 @@ class BaseMethods(FunctionCalculate):
 
         elif methodName == "RungeKuttaFourth":
             return "Рунге-Кутта 4-го порядка"
+
+    def methods_all(self):
+        y = self.method_euler()
+        print(self.table['expDat'])
+        for i in range(0, self.steps, 1):
+            for j in range(self.matrixParam['components']):
+                if y[i, 0] == self.table['expDat'][j]:
+                    return self.table['expDat'][j]
