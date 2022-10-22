@@ -1,9 +1,8 @@
 from django.shortcuts import render, redirect
 from django.views.generic.edit import CreateView
 from django.urls import reverse_lazy, reverse
-import json
 
-from .file_service import write_table_to_file, NumpyEncoder, write_to_file, read_from_file, read_table_to_array
+from .file_service import write_to_file, read_from_file, get_json
 from .methods_service import BaseMethods
 
 from .forms import MatrixForm
@@ -16,10 +15,8 @@ def index(request):
 
 def tables(request):
     if request.method == 'POST':
-        text = request.POST.get('data_table')
-        method_name = request.POST.get('method_name')
-        write_to_file(method_name, 'methods/static/methods/json/method_name.json')
-        write_table_to_file(text, 'methods/static/methods/json/tables.json')
+        json_tables = request.POST.get('json_tables')
+        write_to_file(json_tables, 'methods/static/methods/json/tables_base.json')
         return redirect(reverse('result'))
     else:
         matrix = Matrix.objects.all()
@@ -28,26 +25,26 @@ def tables(request):
 
 
 def result(request):
-    methodName = read_from_file('methods/static/methods/json/method_name.json')
-    array = read_table_to_array('methods/static/methods/json/tables.json')
-    baseMethod = BaseMethods(array)
-    dataMethod = baseMethod.method_selection(methodName)
-    method_name = baseMethod.method_name_selection(methodName)
-    print(baseMethod.methods_all())
-    exp_table = baseMethod.table['expDat']
-    json_dump = json.dumps({'data': dataMethod},
-                           cls=NumpyEncoder)
-    json_exp = json.dumps({'exp_table': exp_table},
-                           cls=NumpyEncoder)
-    matrix = Matrix.objects.all()
-    context={
-        'data': dataMethod,
-        'json_dump': json_dump,
-        'json_exp': json_exp,
-        'matrix': matrix,
-        'method_name': method_name,
+    tables = get_json("methods/static/methods/json/tables_base.json")
+    expData = tables["Экспериментальные данные"]
+    methodName = tables["Название метода"]
+    #######Calculation.main(tables)##########
+    baseMethod = BaseMethods(tables)
+    baseMethod.calculation_all_methods()
+    baseMethod.calculation_all_experients()
+    allMethodsData = read_from_file('methods/static/methods/json/all_methods_result.json')
+    methods = get_json("methods/static/methods/json/all_methods_result.json")
+    selectedMethodData = methods.get(methodName)
+    allMethodsExpData = read_from_file("methods/static/methods/json/all_methods_exp.json")
+
+    context = {
+        'expData': expData,
+        'methodName': methodName,
+        'allMethodsData': allMethodsData,
+        'selectedMethodData': selectedMethodData,
+        'allMethodsExpData': allMethodsExpData,
     }
-    return render (request, 'methods/result.html', context)
+    return render(request, 'methods/result.html', context)
 
 
 class MatrixCreateView(CreateView):

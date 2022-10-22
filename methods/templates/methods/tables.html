@@ -3,6 +3,7 @@
 {% block title %} Заполнение матриц {% endblock %}
 
 {% block content  %}
+
 <form method="post">
     {% csrf_token %}
     <h1>Заполнение матриц</h1>
@@ -16,12 +17,12 @@
 
             <select id="methodName">
                 <option disabled>Выберите метод</option>
-                <option value="Euler">Метод Эйлера</option>
-                <option value="RungeKuttaSecond">Метод Рунге-Кутта 2-го порядка</option>
-                <option value="RungeKuttaFourth">Метод Рунге-Кутта 4-го порядка</option>
-                <option value="ImplicitEuler">Метод Эйлера неявный</option>
-                <option value="Trapezoid">Метод Трапеций</option>
-                <option value="MiddlePoint">Метод Средней точки</option>
+                <option value="метод Эйлера">Метод Эйлера</option>
+                <option value="Метод Рунге-Кутты 2-го порядка">Метод Рунге-Кутта 2-го порядка</option>
+                <option value="Метод Рунге-Кутты 4-го порядка">Метод Рунге-Кутта 4-го порядка</option>
+                <option value="Неявный метод Эйлера">Метод Эйлера неявный</option>
+                <option value="Метод трапеций">Метод Трапеций</option>
+                <option value="Метод средней точки">Метод Средней точки</option>
             </select>
         </p>
         <a href = "{% url 'result' %}">Результаты</a>
@@ -34,7 +35,7 @@
     </div>
 </form>
 
-    <script type="text/javascript">
+<script type="text/javascript">
         const stehCoef = document.getElementById('stehCoef');
         const pokStep = document.getElementById('pokStep');
         const expData = document.getElementById('expData');
@@ -44,65 +45,83 @@
 
         window.onload = function () {
 
-            function fillTable(table, tableRows, tableColumns) {
-                for (var i = 0; i < tableRows + 1; i++) {
-                    var tr = document.createElement('tr');
-                    for (var j = 0; j < tableColumns + 1; j++) {
-                        var td = document.createElement('td');
-                        tr.appendChild(td);
-                        var jj = j-1;
-                        if ((i == 0) && (table == expData) && (j == 1)) td.innerHTML = "t";
-                        else if ((i == 0) && (table != constSpeed) && (table != expData)) td.innerHTML = "A" + j;
-                        else if ((i == 0) && (table == constSpeed)) td.innerHTML = "Константы";
-                        else if ((i == 0) && (table == expData)) td.innerHTML = "A" + jj;
-                        if ((j == 0) && (i!=0) )td.innerHTML = i;
-                        else if ((j == 0) && (i==0)) td.innerHTML = "№";
-                    }
-
-                    table.appendChild(tr);
-                }
-                var td = document.querySelectorAll('td');
-            }
-
             function changeValue(event){
-                var target = event.target;
+                let target = event.target;
                 target.setAttribute("contenteditable", true);
             }
 
-            {% for m in matrix %}
-            fillTable(stehCoef, {{ m.stages }},{{ m.components }});
-            fillTable(pokStep, {{ m.stages }},{{ m.components }});
-            fillTable(expData, {{ m.experients }},{{ m.components}} + 1);
-            fillTable(constSpeed, {{ m.stages }},1);
-            {% endfor %}
+            function createTable(id, header, rows, cells) {
+              let table = document.getElementById(id);
+              for( let i = 0; i < 1; i++ ) {
+                  let tr = document.createElement('tr')
 
-            stehCoef.addEventListener("click", changeValue);
-            pokStep.addEventListener("click", changeValue);
-            expData.addEventListener("click", changeValue);
-            constSpeed.addEventListener("click", changeValue);
+                for (let j = 0; j < header.length; j++){
+                    let th = document.createElement('th')
+                    th.innerHTML = header[j];
+                    tr.appendChild(th)
+                }
+                let count = 1;
+                for (let j = header.length; j <= cells; j++){
+                    let th = document.createElement('th');
+                    th.innerHTML = "A" + count;
+                    tr.appendChild(th);
+                    count++;
+                }
+                table.appendChild(tr)
+              }
+
+              for( let i = 0; i < rows; i++ ) {
+                  let tr = document.createElement('tr')
+
+                for (let j = 0; j <= cells; j++){
+                    let td = document.createElement('td')
+                    if (j===0) td.innerHTML = i
+                    else td.addEventListener("click", changeValue);
+                    tr.appendChild(td)
+                }
+                table.appendChild(tr)
+              }
+            }
+
+            let headerMatrix = ["№"];
+            let headerExp = ["№","t"];
+            let headerConst = ["№", "Константы"];
+
+            {% for m in matrix %}
+            createTable('stehCoef', headerMatrix, {{ m.stages }},{{ m.components }});
+            createTable('pokStep', headerMatrix, {{ m.stages }},{{ m.components }});
+            createTable('expData', headerExp, {{ m.experients }},{{ m.components}} + 1);
+            createTable('constSpeed', headerConst, {{ m.stages }},1);
+            {% endfor %}
 
         }
 
         function tableToJson(table) {
-            var tableArray = new Array();
-            const tr = table.querySelectorAll('tr');
-            for (var i = 1; i < tr.length; i++) {
-                tableArray[i] = new Array();
-                for (var j = 1; j < tr[i].children.length; j++) {
-                    if(tr[i].children[j].innerHTML == ''){
-                        tableArray[i][j] = 0;
+            let tableArray = [];
+            let tr = table.querySelectorAll('tr');
+            for (let i = 1; i < tr.length; i++) {
+                let line = [];
+                for (let j = 0; j < tr[i].children.length - 1; j++) {
+                    if(tr[i].children[j+1].innerHTML === ''){
+                        line[j] = 0;
                     }
-                    else tableArray[i][j] = tr[i].children[j].innerHTML;
-
+                    else line[j] = Number(tr[i].children[j+1].innerHTML);
                 }
+                tableArray.push(line);
             }
             return tableArray;
         }
 
-        function FullTable(T1,T2,T3,T4){
-            var T = T1+T2+T3+T4;
-            console.log(T)
-            return T
+        function TablesDictionary(T1,T2,T3,T4,methodName){
+            let dict = {
+                "Матрица стехиометрических коэффициентов": T1,
+                "Матрица показателей степени": T2,
+                "Экспериментальные данные": T3,
+                "Константы скорости": T4,
+                "Название метода":methodName,
+            };
+            console.log(JSON.stringify(dict, null, 4))
+            return JSON.stringify(dict, null, 4);
         }
 
         getMethodName = function() {
@@ -110,8 +129,7 @@
             return name
         }
 
-        inputSolution.addEventListener('click', () => FullTable(tableToJson(stehCoef), tableToJson(pokStep),tableToJson(expData),tableToJson(constSpeed)));
-        inputSolution.addEventListener('click', () => getMethodName());
+        inputSolution.addEventListener('click', () => TablesDictionary(tableToJson(stehCoef), tableToJson(pokStep), tableToJson(expData),tableToJson(constSpeed), getMethodName()));
 
         $(document).ready(function (){
             var csrf = $("input[name=csrfmiddlewaretoken]").val();
@@ -120,8 +138,7 @@
                     url:'',
                     type: 'post',
                     data:{
-                        data_table: FullTable(tableToJson(stehCoef), tableToJson(pokStep),tableToJson(expData),tableToJson(constSpeed)),
-                        method_name: getMethodName(),
+                        json_tables: TablesDictionary(tableToJson(stehCoef), tableToJson(pokStep), tableToJson(expData),tableToJson(constSpeed), getMethodName()),
                         csrfmiddlewaretoken: csrf
                     },
                 })

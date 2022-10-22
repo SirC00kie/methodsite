@@ -4,156 +4,170 @@
 
 {% block content %}
     <h1>Решение системы ОДУ</h1>
-<div class="layer1">
-    <h1>Решение уравнений методом {{ method_name }} </h1>
-    <table id="result_table">
-        {% for row in data %}
-            <tr>
-            {% for cell in row %}
-                <td>{{ cell|floatformat:5 }}</td>
+    <div class="layer1">
+        <h1>Решение уравнений методом {{ methodName }} </h1>
+        <table id="resultTable"></table>
+        <h1>Экспериментальные данные</h1>
+        <table id="expTable"></table>
+        <h1></h1>
+        <h1>Сравнение результатов в экспериментальных точках</h1>
+        <button id="hide-btn-exp"> Скрыть | Показать</button>
+        <div id="expTables" style="display: none">
+            <p>Метод Эйлера</p>
+            <table id="eulerExpTable"></table>
+            <p>Неявный метод Эйлера</p>
+            <table id="implicitEulerExpTable"></table>
+            <p>Метод трапеций</p>
+            <table id="trapezoidExpTable"></table>
+            <p>Метод средней точки</p>
+            <table id="middlePointExpTable"></table>
+            <p>Метод Рунге-Кутты 2-го порядка</p>
+            <table id="rungeKuttaSecondExpTable"></table>
+            <p>Метод Рунге-Кутты 4-го порядка</p>
+            <table id="rungeKuttaFourthExpTable"></table>
+        </div>
+    </div>
+    <div class="layer2">
+        <h1>График решения уравнений</h1>
+        <canvas id="myChart"></canvas>
+        <h1></h1>
+        <h1>Сравнение методов</h1>
+        <button id="hide-btn"> Скрыть | Показать</button>
+        <div id="tables" style="display: none">
+            <p>Метод Эйлера</p>
+            <table id="eulerTable"></table>
+            <p>Неявный метод Эйлера</p>
+            <table id="implicitEulerTable"></table>
+            <p>Метод трапеций</p>
+            <table id="trapezoidTable"></table>
+            <p>Метод средней точки</p>
+            <table id="middlePointTable"></table>
+            <p>Метод Рунге-Кутты 2-го порядка</p>
+            <table id="rungeKuttaSecondTable"></table>
+            <p>Метод Рунге-Кутты 4-го порядка</p>
+            <table id="rungeKuttaFourthTable"></table>
+        </div>
 
-            {% endfor %}
-            </tr>
-        {% endfor %}
-    </table>
-</div>
-<div class="layer2">
-    <h1>График решения уравнений</h1>
-    <canvas id="myChart"></canvas>
-    <h1>Экперементальные данные</h1>
-    <table id="expDat"></table>
-</div>
-<div style="display: none" id="jsonData" data-json="{{ json_dump }}"></div>
-<div style="display: none" id="jsonExp" data-json="{{ json_exp }}"></div>
-<script>
-    function loadJson(selector) {
-      return JSON.parse(document.querySelector(selector).getAttribute('data-json'));
-    }
+    </div>
+    <div style="display: none" id="expData" data-json="{{ expData }}"></div>
+    <div style="display: none" id="allMethodsData" data-json="{{ allMethodsData }}"></div>
+    <div style="display: none" id="selectedMethodData" data-json="{{ selectedMethodData }}"></div>
+    <div style="display: none" id="allMethodsExpData" data-json="{{ allMethodsExpData }}"></div>
+    <script>
 
-    var steps = []
-    var jsonData = loadJson('#jsonData');
-    var jsonExp = loadJson('#jsonExp');
-
-    function convertArr(arr, cols) { // cols - указывает на количество элементов в подмассиве
-        let resultArr = [];
-
-    // будем пушить и резать массив, пока не опустошим его полностью
-        while(arr.length > 0) {
-            resultArr.push(arr.slice(0, cols)); // пушим первые элементы исходного массива в новый
-            arr.splice(0, cols) // удаляем запушенные элементы из исходного массива
+        function loadJson(selector) {
+          return JSON.parse((document.querySelector(selector).getAttribute('data-json')));
         }
-    // вернем новый массив
-        return resultArr;
-    }
 
-    {% for m in matrix %}
-        var components = {{ m.components }}
-        var stages = {{ m.stages }}
-        var experients = {{ m.experients }}
-    {% endfor %}
+        let steps = [];
+        let expData = loadJson('#expData');
+        let allMethodsData = loadJson('#allMethodsData');
+        let selectedMethodData = loadJson('#selectedMethodData');
+        let allMethodsExpData = loadJson('#allMethodsExpData');
+        let headerRes = ["№","t"];
 
-    var exp_table = convertArr(jsonExp['exp_table'], components+1);
+        console.log(expData)
+        function createTable(id, data, header) {
+          let table = document.getElementById(id);
+          for( let i = 0; i < 1; i++ ) {
+              let tr = document.createElement('tr')
 
-    const expDat = document.getElementById('expDat');
-
-    const result_table = document.getElementById('result_table');
-    var row = result_table.insertRow(0);
-    for (let i = 0; i <= components; i++) {
-        var cell = row.insertCell(0);
-        if (i != components) cell.appendChild(document.createTextNode('A' + (components-i)));
-        else cell.appendChild(document.createTextNode('t'))
-    }
-
-    for (var i = 0; i < experients + 1; i++) {
-        var tr = document.createElement('tr');
-        for (var j = 0; j < components + 2; j++) {
-            var td = document.createElement('td');
-            if (i>0 && j>0) td.innerHTML = exp_table[i-1][j-1];
-            tr.appendChild(td);
-            var jj = j-1;
-            if ((i == 0) && (j == 1)) td.innerHTML = "t";
-            else if (i == 0) td.innerHTML = "A" + jj;
-            if ((j == 0) && (i!=0) )td.innerHTML = i;
-            else if ((j == 0) && (i==0)) td.innerHTML = "№";
-        }
-        expDat.appendChild(tr);
-    }
-    var td = document.querySelectorAll('td');
-
-    for (let i = 0; i < jsonData['data'].length; i++) {
-        steps[i] = jsonData['data'][i][0].toFixed(5)
-    }
-    const transpose = matrix => matrix[0].map((col, i) => matrix.map(row => row[i]));
-
-    const transposedMatrix = transpose(jsonData['data']);
-    transposedMatrix.splice(0,1);
-
-    var arrColoros = ["red", "blue", "green", "orange", "aqua", "purple", "gray", "deeppink", "khaki", "indigo", "maroon", "midnightblue", "olive", "salmon", "sienna", "thistle", "tomato" ]
-
-    var ctx = document.getElementById('myChart').getContext('2d');
-    var myChart = new Chart(ctx,{
-        type: 'line',
-        data: {
-            labels: steps,
-            datasets: [{
-                id:'1'
-            }],
-
-        },
-        options: {
-            responsive: true
-        }
-    });
-
-
-    transposedMatrix.forEach(function (a, i) {
-        myChart.data.datasets.push({
-            label: 'A ' + (i+1),
-            borderColor: arrColoros[i],
-            backgroundColor: arrColoros[i],
-            pointBorderColor:'black',
-            pointBackgroundColor:arrColoros[i],
-            borderWidth: 1,
-            pointRadius: 2.5,
-            data: transposedMatrix[i]
-        });
-    });
-    console.log(myChart.data);
-
-    myChart.data.datasets.find((dataset, index) => {
-        if (dataset.id === '1') {
-           myChart.data.datasets.splice(index, 1);
-           return true; // stop searching
-        }
-    });
-    myChart.update();
-            function tableToJs(table) {
-                var data = [];
-
-                // first row needs to be headers
-                var headers = [];
-                for (var i=0; i<table.rows[0].cells.length; i++) {
-                    headers[i] = table.rows[0].cells[i].innerHTML.toLowerCase().replace(/ /gi,'');
-                }
-
-                // go through cells
-                for (var i=1; i<table.rows.length; i++) {
-
-                    var tableRow = table.rows[i];
-                    var rowData = {};
-
-                    for (var j=0; j<tableRow.cells.length; j++) {
-
-                        rowData[ headers[j] ] = tableRow.cells[j].innerHTML;
-
-                    }
-
-                    data.push(rowData);
-                }
-
-                return data;
+            for (let j = 0; j < header.length; j++){
+                let th = document.createElement('th')
+                th.innerHTML = header[j];
+                tr.appendChild(th)
             }
+            let count = 1;
+            for (let j = header.length; j <= data[0].length; j++){
+                let th = document.createElement('th');
+                th.innerHTML = "A" + count;
+                tr.appendChild(th);
+                count++;
+            }
+            table.appendChild(tr)
+          }
 
-            console.log((JSON.stringify(tableToJs(result_table))))
-</script>
+          for( let i = 0; i < data.length; i++ ) {
+              let tr = document.createElement('tr')
+
+            for (let j = 0; j < data[0].length + 1; j++){
+                let td = document.createElement('td');
+                if (j===0) td.innerHTML = i;
+                else td.innerHTML = data[i][j-1].toFixed(5);
+                tr.appendChild(td)
+            }
+            table.appendChild(tr)
+          }
+        }
+
+        createTable('expTable', expData, headerRes)
+        createTable('resultTable', selectedMethodData, headerRes)
+        createTable('eulerTable', allMethodsData["метод Эйлера"], headerRes)
+        createTable('implicitEulerTable', allMethodsData["Неявный метод Эйлера"], headerRes)
+        createTable('trapezoidTable', allMethodsData["Метод трапеций"], headerRes)
+        createTable('middlePointTable', allMethodsData["Метод средней точки"], headerRes)
+        createTable('rungeKuttaSecondTable', allMethodsData["Метод Рунге-Кутты 2-го порядка"], headerRes)
+        createTable('rungeKuttaFourthTable', allMethodsData["Метод Рунге-Кутты 4-го порядка"], headerRes)
+        createTable('eulerExpTable', allMethodsExpData["метод Эйлера экспериментальные"], headerRes)
+        createTable('implicitEulerExpTable', allMethodsExpData["Неявный метод Эйлера экспериментальные"], headerRes)
+        createTable('trapezoidExpTable', allMethodsExpData["Метод трапеций экспериментальные"], headerRes)
+        createTable('middlePointExpTable', allMethodsExpData["Метод средней точки экспериментальные"], headerRes)
+        createTable('rungeKuttaSecondExpTable', allMethodsExpData["Метод Рунге-Кутты 2-го порядка экспериментальные"], headerRes)
+        createTable('rungeKuttaFourthExpTable', allMethodsExpData["Метод Рунге-Кутты 4-го порядка экспериментальные"], headerRes)
+
+        for (let i = 0; i < selectedMethodData.length; i++) {
+            steps[i] = selectedMethodData[i][0].toFixed(3)
+        }
+
+        const transpose = matrix => matrix[0].map((col, i) => matrix.map(row => row[i]));
+
+        const transposedMatrix = transpose(selectedMethodData);
+        transposedMatrix.splice(0,1);
+
+        let arrColoros = ["red", "blue", "green", "orange", "aqua", "purple", "gray", "deeppink", "khaki", "indigo", "maroon", "midnightblue", "olive", "salmon", "sienna", "thistle", "tomato" ]
+
+        let ctx = document.getElementById('myChart').getContext('2d');
+        let myChart = new Chart(ctx,{
+            type: 'line',
+            data: {
+                labels: steps,
+                datasets: [{
+                    id:'1'
+                }],
+            },
+            options: {
+                responsive: true
+            }
+        });
+
+        transposedMatrix.forEach(function (a, i) {
+            myChart.data.datasets.push({
+                label: 'A ' + (i+1),
+                borderColor: arrColoros[i],
+                backgroundColor: arrColoros[i],
+                pointBorderColor:'black',
+                pointBackgroundColor:arrColoros[i],
+                borderWidth: 1,
+                pointRadius: 2.5,
+                data: transposedMatrix[i]
+            });
+        });
+
+        myChart.data.datasets.find((dataset, index) => {
+            if (dataset.id === '1') {
+               myChart.data.datasets.splice(index, 1);
+               return true;
+            }
+        });
+        myChart.update();
+
+        document.getElementById('hide-btn').onclick = function() {
+          let el = document.getElementById('tables');
+          el.style.display === 'none' ? el.style.display = 'initial' : el.style.display = 'none';
+        }
+        document.getElementById('hide-btn-exp').onclick = function() {
+          let el = document.getElementById('expTables');
+          el.style.display === 'none' ? el.style.display = 'initial' : el.style.display = 'none';
+        }
+    </script>
 {% endblock %}
