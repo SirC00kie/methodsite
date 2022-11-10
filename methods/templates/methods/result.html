@@ -7,29 +7,13 @@
     <div class="layer1">
         <h1>Решение уравнений методом {{ methodName }} </h1>
         <table id="resultTable"></table>
-        <h1>Экспериментальные данные</h1>
-        <table id="expTable"></table>
-        <h1></h1>
-        <h1>Сравнение результатов в экспериментальных точках</h1>
-        <button id="hide-btn-exp"> Скрыть | Показать</button>
-        <div id="expTables" style="display: none">
-            <p>Метод Эйлера</p>
-            <table id="eulerExpTable"></table>
-            <p>Неявный метод Эйлера</p>
-            <table id="implicitEulerExpTable"></table>
-            <p>Метод трапеций</p>
-            <table id="trapezoidExpTable"></table>
-            <p>Метод средней точки</p>
-            <table id="middlePointExpTable"></table>
-            <p>Метод Рунге-Кутты 2-го порядка</p>
-            <table id="rungeKuttaSecondExpTable"></table>
-            <p>Метод Рунге-Кутты 4-го порядка</p>
-            <table id="rungeKuttaFourthExpTable"></table>
-        </div>
     </div>
     <div class="layer2">
         <h1>График решения уравнений</h1>
+        <button id="hide-chart"> Скрыть | Показать</button>
         <canvas id="myChart"></canvas>
+        <h1>Экспериментальные данные</h1>
+        <table id="expTable"></table>
         <h1></h1>
         <h1>Сравнение методов</h1>
         <button id="hide-btn"> Скрыть | Показать</button>
@@ -46,6 +30,58 @@
             <table id="rungeKuttaSecondTable"></table>
             <p>Метод Рунге-Кутты 4-го порядка</p>
             <table id="rungeKuttaFourthTable"></table>
+            <p>Метод Кутты-Мерсона</p>
+            <table id="kuttaMersonTable"></table>
+            <p>Метод Рунге-Кутты-Фельберга</p>
+            <table id="rkf45Table"></table>
+            <p>Явный двухшаговый метод Адамса</p>
+            <table id="explicitAdamsTable"></table>
+        </div>
+        <h1></h1>
+        <h1>Сравнение результатов в экспериментальных точках</h1>
+        <button id="hide-btn-exp"> Скрыть | Показать</button>
+        <div id="expTables" style="display: none">
+            <p>Метод Эйлера</p>
+            <table id="eulerExpTable"></table>
+            <p>Неявный метод Эйлера</p>
+            <table id="implicitEulerExpTable"></table>
+            <p>Метод трапеций</p>
+            <table id="trapezoidExpTable"></table>
+            <p>Метод средней точки</p>
+            <table id="middlePointExpTable"></table>
+            <p>Метод Рунге-Кутты 2-го порядка</p>
+            <table id="rungeKuttaSecondExpTable"></table>
+            <p>Метод Рунге-Кутты 4-го порядка</p>
+            <table id="rungeKuttaFourthExpTable"></table>
+            <p>Метод Кутты-Мерсона</p>
+            <table id="kuttaMersonExpTable"></table>
+            <p>Метод Рунге-Кутты-Фельберга</p>
+            <table id="rkf45ExpTable"></table>
+            <p>Явный двухшаговый метод Адамса</p>
+            <table id="explicitAdamsExpTable"></table>
+        </div>
+        <h1></h1>
+        <h1>Сравнение относительных погрешностей в экспериментальных точках</h1>
+        <button id="hide-btn-error"> Скрыть | Показать</button>
+        <div id="errorTables" style="display: none">
+            <p>Метод Эйлера, относительная погрешность %</p>
+            <table id="eulerErrorTable"></table>
+            <p>Неявный метод Эйлера, относительная погрешность %</p>
+            <table id="implicitEulerErrorTable"></table>
+            <p>Метод трапеций, относительная погрешность %</p>
+            <table id="trapezoidErrorTable"></table>
+            <p>Метод средней точки, относительная погрешность %</p>
+            <table id="middlePointErrorTable"></table>
+            <p>Метод Рунге-Кутты 2-го порядка, относительная погрешность %</p>
+            <table id="rungeKuttaSecondErrorTable"></table>
+            <p>Метод Рунге-Кутты 4-го порядка, относительная погрешность %</p>
+            <table id="rungeKuttaFourthErrorTable"></table>
+            <p>Метод Кутты-Мерсона, относительная погрешность %</p>
+            <table id="kuttaMersonErrorTable"></table>
+            <p>Метод Рунге-Кутты-Фельберга, относительная погрешность %</p>
+            <table id="rkf45ErrorTable"></table>
+            <p>Явный двухшаговый метод Адамса, относительная погрешность %</p>
+            <table id="explicitAdamsErrorTable"></table>
         </div>
 
     </div>
@@ -53,6 +89,7 @@
     <div style="display: none" id="allMethodsData" data-json="{{ allMethodsData }}"></div>
     <div style="display: none" id="selectedMethodData" data-json="{{ selectedMethodData }}"></div>
     <div style="display: none" id="allMethodsExpData" data-json="{{ allMethodsExpData }}"></div>
+    <div style="display: none" id="allMethodsRelativeError" data-json="{{ allMethodsRelativeError }}"></div>
     <script>
 
         function loadJson(selector) {
@@ -64,9 +101,9 @@
         let allMethodsData = loadJson('#allMethodsData');
         let selectedMethodData = loadJson('#selectedMethodData');
         let allMethodsExpData = loadJson('#allMethodsExpData');
+        let allMethodsRelativeError = loadJson('#allMethodsRelativeError');
         let headerRes = ["№","t"];
 
-        console.log(expData)
         function createTable(id, data, header) {
           let table = document.getElementById(id);
           for( let i = 0; i < 1; i++ ) {
@@ -80,7 +117,7 @@
             let count = 1;
             for (let j = header.length; j <= data[0].length; j++){
                 let th = document.createElement('th');
-                th.innerHTML = "A" + count;
+                th.innerHTML = "C" + count;
                 tr.appendChild(th);
                 count++;
             }
@@ -99,7 +136,6 @@
             table.appendChild(tr)
           }
         }
-
         createTable('expTable', expData, headerRes)
         createTable('resultTable', selectedMethodData, headerRes)
         createTable('eulerTable', allMethodsData["метод Эйлера"], headerRes)
@@ -108,12 +144,27 @@
         createTable('middlePointTable', allMethodsData["Метод средней точки"], headerRes)
         createTable('rungeKuttaSecondTable', allMethodsData["Метод Рунге-Кутты 2-го порядка"], headerRes)
         createTable('rungeKuttaFourthTable', allMethodsData["Метод Рунге-Кутты 4-го порядка"], headerRes)
+        createTable('kuttaMersonTable', allMethodsData["Метод Кутты-Мерсона"], headerRes)
+        createTable('rkf45Table', allMethodsData["Метод Рунге-Кутты-Фельберга"], headerRes)
+        createTable('explicitAdamsTable', allMethodsData["Явный двухшаговый метод Адамса"], headerRes)
         createTable('eulerExpTable', allMethodsExpData["метод Эйлера экспериментальные"], headerRes)
         createTable('implicitEulerExpTable', allMethodsExpData["Неявный метод Эйлера экспериментальные"], headerRes)
         createTable('trapezoidExpTable', allMethodsExpData["Метод трапеций экспериментальные"], headerRes)
         createTable('middlePointExpTable', allMethodsExpData["Метод средней точки экспериментальные"], headerRes)
         createTable('rungeKuttaSecondExpTable', allMethodsExpData["Метод Рунге-Кутты 2-го порядка экспериментальные"], headerRes)
         createTable('rungeKuttaFourthExpTable', allMethodsExpData["Метод Рунге-Кутты 4-го порядка экспериментальные"], headerRes)
+        createTable('kuttaMersonExpTable', allMethodsExpData["Метод Кутты-Мерсона экспериментальные"], headerRes)
+        createTable('rkf45ExpTable', allMethodsExpData["Метод Рунге-Кутты-Фельберга экспериментальные"], headerRes)
+        createTable('explicitAdamsExpTable', allMethodsExpData["Явный двухшаговый метод Адамса экспериментальные"], headerRes)
+        createTable('eulerErrorTable', allMethodsRelativeError["метод Эйлера погрешность"], headerRes)
+        createTable('implicitEulerErrorTable', allMethodsRelativeError["Неявный метод Эйлера погрешность"], headerRes)
+        createTable('trapezoidErrorTable', allMethodsRelativeError["Метод трапеций погрешность"], headerRes)
+        createTable('middlePointErrorTable', allMethodsRelativeError["Метод средней точки погрешность"], headerRes)
+        createTable('rungeKuttaSecondErrorTable', allMethodsRelativeError["Метод Рунге-Кутты 2-го порядка погрешность"], headerRes)
+        createTable('rungeKuttaFourthErrorTable', allMethodsRelativeError["Метод Рунге-Кутты 4-го порядка погрешность"], headerRes)
+        createTable('kuttaMersonErrorTable', allMethodsRelativeError["Метод Кутты-Мерсона погрешность"], headerRes)
+        createTable('rkf45ErrorTable', allMethodsRelativeError["Метод Рунге-Кутты-Фельберга погрешность"], headerRes)
+        createTable('explicitAdamsErrorTable', allMethodsRelativeError["Явный двухшаговый метод Адамса погрешность"], headerRes)
 
         for (let i = 0; i < selectedMethodData.length; i++) {
             steps[i] = selectedMethodData[i][0].toFixed(3)
@@ -161,13 +212,15 @@
         });
         myChart.update();
 
-        document.getElementById('hide-btn').onclick = function() {
-          let el = document.getElementById('tables');
-          el.style.display === 'none' ? el.style.display = 'initial' : el.style.display = 'none';
+        function hide(butId, elementId){
+            document.getElementById(butId).onclick = function() {
+            let el = document.getElementById(elementId);
+            el.style.display === 'none' ? el.style.display = 'initial' : el.style.display = 'none';
+            }
         }
-        document.getElementById('hide-btn-exp').onclick = function() {
-          let el = document.getElementById('expTables');
-          el.style.display === 'none' ? el.style.display = 'initial' : el.style.display = 'none';
-        }
+        hide('hide-btn', 'tables');
+        hide('hide-btn-exp', 'expTables');
+        hide('hide-chart', 'myChart');
+        hide('hide-btn-error', 'errorTables');
     </script>
 {% endblock %}
