@@ -1,3 +1,5 @@
+import time
+
 from django.shortcuts import render, redirect
 from django.views.generic.edit import CreateView
 from django.urls import reverse_lazy, reverse
@@ -28,21 +30,26 @@ def result(request):
     tables = get_json("methods/static/methods/json/tables_base.json")
     expData = tables["Экспериментальные данные"]
     methodName = tables["Название метода"]
-    #######Calculation.main(tables)##########
     baseMethod = BaseMethods(tables)
+
     baseMethod.calculation_all_methods()
     baseMethod.calculation_all_experients()
+    baseMethod.calculation_relative_error()
+
     allMethodsData = read_from_file('methods/static/methods/json/all_methods_result.json')
     methods = get_json("methods/static/methods/json/all_methods_result.json")
     selectedMethodData = methods.get(methodName)
     allMethodsExpData = read_from_file("methods/static/methods/json/all_methods_exp.json")
+    allMethodsRelativeError = read_from_file("methods/static/methods/json/all_methods_relative_error.json")
 
+    time.sleep(5)
     context = {
         'expData': expData,
         'methodName': methodName,
         'allMethodsData': allMethodsData,
         'selectedMethodData': selectedMethodData,
         'allMethodsExpData': allMethodsExpData,
+        'allMethodsRelativeError': allMethodsRelativeError,
     }
     return render(request, 'methods/result.html', context)
 

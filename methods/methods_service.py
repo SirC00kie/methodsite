@@ -1,3 +1,5 @@
+import math
+
 import numpy as np
 from methods.file_service import set_json, get_json
 
@@ -13,10 +15,10 @@ class BaseMethods:
         self.matrixParam['components'] = Matrix._meta.get_field('components').value_from_object(Matrix.objects.first())
         self.matrixParam['experients'] = Matrix._meta.get_field('experients').value_from_object(Matrix.objects.first())
         self.matrixParam['step'] = Matrix._meta.get_field('step').value_from_object(Matrix.objects.first())
-        self.stehCoef = self.tables["Матрица стехиометрических коэффициентов"]
-        self.pokazStep = self.tables["Матрица показателей степени"]
-        self.expDat = self.tables["Экспериментальные данные"]
-        self.constSpeed = self.tables["Константы скорости"]
+        self.stehCoef = self.tables["Матрица стехиометрических коэффициентов"].copy()
+        self.pokazStep = self.tables["Матрица показателей степени"].copy()
+        self.expDat = self.tables["Экспериментальные данные"].copy()
+        self.constSpeed = self.tables["Константы скорости"].copy()
         self.selectedMethod = self.tables["Название метода"]
         self.t = self.expDat[0][0]
         self.h = self.matrixParam['step']
@@ -24,8 +26,8 @@ class BaseMethods:
         self.steps = int(self.n / self.h)
 
     def system_diff_equation(self, y):
-        A = np.zeros(self.matrixParam['components'])
-        sumA = np.zeros(self.matrixParam['components'])
+        C = np.zeros(self.matrixParam['components'])
+        sumC = np.zeros(self.matrixParam['components'])
         r = np.zeros(self.matrixParam['stages'])
         sumR = np.zeros(self.matrixParam['stages'])
 
@@ -37,9 +39,9 @@ class BaseMethods:
                     sumR[i] *= r[i]
         for i in range(self.matrixParam['components']):
             for j in range(self.matrixParam['stages']):
-                A[i] = self.stehCoef[j][i] * sumR[j]
-                sumA[i] += A[i]
-        return sumA
+                C[i] = self.stehCoef[j][i] * sumR[j]
+                sumC[i] += C[i]
+        return sumC
 
     def method(self):
         x = self.t
@@ -63,32 +65,32 @@ class BaseMethods:
 
     def implicit_method_euler(self):
         y = self.method()
-        y_n = self.method()
+        y_euler = self.method_euler()
 
         for i in range(self.steps):
             for j in range(self.matrixParam['components']):
-                y_n[i + 1, j + 1] = y[i, j + 1] + self.h * self.system_diff_equation(y[i, 1:])[j]
-                y[i + 1, j + 1] = y[i, j + 1] + self.h * self.system_diff_equation(y_n[i, 1:])[j]
+                y[i + 1, j + 1] = y[i, j + 1] + self.h * self.system_diff_equation(y_euler[i + 1, 1:])[j]
         return y
 
     def method_trapezoid(self):
         y = self.method()
-        y_n = self.method()
+        y_euler = self.method_euler()
 
         for i in range(self.steps):
             for j in range(self.matrixParam['components']):
-                y_n[i + 1, j + 1] = y[i, j + 1] + self.h * self.system_diff_equation(y[i, 1:])[j]
-                y[i + 1, j + 1] = y[i, j + 1] + (self.h / 2) * (self.system_diff_equation(y_n[i + 1, 1:])[j] + self.system_diff_equation(y[i, 1:])[j])
+                y[i + 1, j + 1] = y[i, j + 1] + (self.h / 2) * (
+                            self.system_diff_equation(y_euler[i + 1, 1:])[j] + self.system_diff_equation(y[i, 1:])[j])
         return y
 
     def method_middle_point(self):
         y = self.method()
-        y_n = self.method()
+        y_euler = self.method_euler()
+        y_middle = self.method()
 
         for i in range(self.steps):
             for j in range(self.matrixParam['components']):
-                y_n[i + 1, j + 1] = y[i, j + 1] + self.h * self.system_diff_equation(y[i, 1:])[j]
-                y[i + 1, j + 1] = y[i, j + 1] + self.h * self.system_diff_equation((y_n[i + 1, 1:] + y[i, 1:]) / 2)[j]
+                y_middle[i + 1, j + 1] = y_euler[i, j + 1] + (self.h / 2) * self.system_diff_equation(y_euler[i, 1:])[j]
+                y[i + 1, j + 1] = y[i, j + 1] + self.h * self.system_diff_equation(y_middle[i + 1, 1:])[j]
         return y
 
     def method_runge_kutta_second(self):
@@ -112,6 +114,64 @@ class BaseMethods:
                 y[i + 1, j + 1] = y[i, j + 1] + (self.h / 6) * (K1 + 2 * K2 + 2 * K3 + K4)
         return y
 
+    def method_kutta_merson(self):
+        y = self.method()
+        h = self.h
+        R = 0
+        e = 1
+        for i in range(self.steps):
+            for j in range(self.matrixParam['components']):
+                if R < e:
+                    K1 = self.system_diff_equation(y[i, 1:])[j]
+                    K2 = self.system_diff_equation(y[i, 1:] + (h / 3 * K1))[j]
+                    K3 = self.system_diff_equation(y[i, 1:] + (h / 6 * K1) + (h / 6 * K2))[j]
+                    K4 = self.system_diff_equation(y[i, 1:] + (h / 8 * K1) + (3 * h / 8 * K2))[j]
+                    K5 = self.system_diff_equation(y[i, 1:] + (h / 2 * K1) - (3 * h / 2 * K3) + (2 * h * K4))[j]
+                    y[i + 1, j + 1] = y[i, j + 1] + h / 6 * (K1 + 4 * K4 + K5)
+                elif R >= e:
+                    h = h / 2
+                elif R <= e / 64:
+                    h = h * 2
+        return y
+
+    def rkf45(self):
+        y = self.method()
+        h = self.h
+        R = 0
+        e = 1
+        for i in range(self.steps):
+            for j in range(self.matrixParam['components']):
+                if R < e:
+                    K1 = self.system_diff_equation(y[i, 1:])[j]
+                    K2 = self.system_diff_equation(y[i, 1:] + (h / 4 * K1))[j]
+                    K3 = self.system_diff_equation(y[i, 1:] + (3 * h / 32 * K1) + (9 * h / 32 * K2))[j]
+                    K4 = self.system_diff_equation(
+                        y[i, 1:] + (1932 * h / 2197 * K1) - (7200 * h / 2197 * K2) + (7296 * h / 2197 * K3))[j]
+                    K5 = self.system_diff_equation(
+                        y[i, 1:] + (439 * h / 216 * K1) - (8 * h * K2) + (3600 * h / 513 * K3) - (845 * h / 4104 * K4))[
+                        j]
+                    K6 = self.system_diff_equation(
+                        y[i, 1:] - (8 * h / 27 * K1) + (2 * h * K2) - (3544 * h / 2565 * K3) + (
+                                    1859 * h / 4104 * K4) + (11 * h / 40 * K5))[j]
+                    y[i + 1, j + 1] = y[i, j + 1] + h * (
+                                (16 * K1 / 135) + (6656 * K3 / 12825) + (28561 * K4 / 56430) - (9 * K6 / 50) + (
+                                    2 * K5 / 55))
+
+                elif R >= e:
+                    h = h / 2
+                elif R <= e / 64:
+                    h = h * 2
+        return y
+
+    def explicit_second_adams_method(self):
+        y = self.method()
+        for i in range(self.steps):
+            for j in range(self.matrixParam['components']):
+                y[i + 1, j + 1] = y[i, j + 1] + (self.h / 2) * (3 * self.system_diff_equation(y[i, 1:])[j]
+                                                                - self.system_diff_equation(y[i - 1, 1:])[j])
+
+        return y
+
     def calculation_all_methods(self):
         method_euler = self.method_euler()
         implicit_method_euler = self.implicit_method_euler()
@@ -119,6 +179,9 @@ class BaseMethods:
         method_middle_point = self.method_middle_point()
         method_runge_kutta_second = self.method_runge_kutta_second()
         method_runge_kutta_fourth = self.method_runge_kutta_fourth()
+        method_kutta_merson = self.method_kutta_merson()
+        rkf45 = self.rkf45()
+        explicit_second_adams_method = self.explicit_second_adams_method()
 
         tdict = {
             "метод Эйлера": method_euler.tolist(),
@@ -127,15 +190,19 @@ class BaseMethods:
             "Метод средней точки": method_middle_point.tolist(),
             "Метод Рунге-Кутты 2-го порядка": method_runge_kutta_second.tolist(),
             "Метод Рунге-Кутты 4-го порядка": method_runge_kutta_fourth.tolist(),
+            "Метод Кутты-Мерсона": method_kutta_merson.tolist(),
+            "Метод Рунге-Кутты-Фельберга": rkf45.tolist(),
+            "Явный двухшаговый метод Адамса": explicit_second_adams_method.tolist(),
         }
         set_json(tdict, "methods/static/methods/json/all_methods_result.json")
 
     def experient(self, name: str):
         methods = get_json("methods/static/methods/json/all_methods_result.json")
         mas = self.expDat.copy()
+
         j = 0
         for i in range(len(methods[name])):
-            if round(self.expDat[j][0], 1) == round(methods[name][i][0], 1):
+            if round(mas[j][0], 1) == round(methods[name][i][0], 1):
                 mas[j] = methods[name][i][:]
                 j += 1
         return mas
@@ -149,5 +216,39 @@ class BaseMethods:
             "Метод средней точки экспериментальные": self.experient("Метод средней точки"),
             "Метод Рунге-Кутты 2-го порядка экспериментальные": self.experient("Метод Рунге-Кутты 2-го порядка"),
             "Метод Рунге-Кутты 4-го порядка экспериментальные": self.experient("Метод Рунге-Кутты 4-го порядка"),
+            "Метод Кутты-Мерсона экспериментальные": self.experient("Метод Кутты-Мерсона"),
+            "Метод Рунге-Кутты-Фельберга экспериментальные": self.experient("Метод Рунге-Кутты-Фельберга"),
+            "Явный двухшаговый метод Адамса экспериментальные": self.experient("Явный двухшаговый метод Адамса")
         }
         set_json(tdict, "methods/static/methods/json/all_methods_exp.json")
+
+    def relative_error(self, name: str):
+        expDots = get_json("methods/static/methods/json/all_methods_exp.json")
+        expErorr = expDots[name].copy()
+
+        for i in range(0, len(expErorr), 1):
+            for j in range(1, len(expErorr[i]), 1):
+                if i == 0:
+                    expErorr[i][j] = 0
+                elif self.expDat[i][j] == 0:
+                    expErorr[i][j] = 0
+                else:
+                    expErorr[i][j] = (math.fabs(expDots[name][i][j] - self.expDat[i][j]) / self.expDat[i][j]) * 100
+        return expErorr
+
+    def calculation_relative_error(self):
+        tdict = {
+            "метод Эйлера погрешность": self.relative_error("метод Эйлера экспериментальные"),
+            "Неявный метод Эйлера погрешность": self.relative_error("Неявный метод Эйлера экспериментальные"),
+            "Метод трапеций погрешность": self.relative_error("Метод трапеций экспериментальные"),
+            "Метод средней точки погрешность": self.relative_error("Метод средней точки экспериментальные"),
+            "Метод Рунге-Кутты 2-го порядка погрешность": self.relative_error(
+                "Метод Рунге-Кутты 2-го порядка экспериментальные"),
+            "Метод Рунге-Кутты 4-го порядка погрешность": self.relative_error(
+                "Метод Рунге-Кутты 4-го порядка экспериментальные"),
+            "Метод Кутты-Мерсона погрешность": self.relative_error("Метод Кутты-Мерсона экспериментальные"),
+            "Метод Рунге-Кутты-Фельберга погрешность": self.relative_error(
+                "Метод Рунге-Кутты-Фельберга экспериментальные"),
+            "Явный двухшаговый метод Адамса погрешность": self.relative_error("Явный двухшаговый метод Адамса экспериментальные")
+        }
+        set_json(tdict, "methods/static/methods/json/all_methods_relative_error.json")
