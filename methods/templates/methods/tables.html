@@ -20,9 +20,12 @@
                 <option value="метод Эйлера">Метод Эйлера</option>
                 <option value="Метод Рунге-Кутты 2-го порядка">Метод Рунге-Кутта 2-го порядка</option>
                 <option value="Метод Рунге-Кутты 4-го порядка">Метод Рунге-Кутта 4-го порядка</option>
+                <option value="Метод Кутты-Мерсона">Метод Кутты-Мерсона</option>
+                <option value="Метод Рунге-Кутты-Фельберга">Метод Рунге-Кутты-Фельберга</option>
                 <option value="Неявный метод Эйлера">Метод Эйлера неявный</option>
                 <option value="Метод трапеций">Метод Трапеций</option>
                 <option value="Метод средней точки">Метод Средней точки</option>
+                <option value="Явный двухшаговый метод Адамса">Явный двухшаговый метод Адамса</option>
             </select>
         </p>
         <a href = "{% url 'result' %}">Результаты</a>
@@ -63,7 +66,7 @@
                 let count = 1;
                 for (let j = header.length; j <= cells; j++){
                     let th = document.createElement('th');
-                    th.innerHTML = "A" + count;
+                    th.innerHTML = "C" + count;
                     tr.appendChild(th);
                     count++;
                 }
