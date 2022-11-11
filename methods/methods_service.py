@@ -84,13 +84,12 @@ class BaseMethods:
 
     def method_middle_point(self):
         y = self.method()
-        y_euler = self.method_euler()
         y_middle = self.method()
 
         for i in range(self.steps):
             for j in range(self.matrixParam['components']):
-                y_middle[i + 1, j + 1] = y_euler[i, j + 1] + (self.h / 2) * self.system_diff_equation(y_euler[i, 1:])[j]
-                y[i + 1, j + 1] = y[i, j + 1] + self.h * self.system_diff_equation(y_middle[i + 1, 1:])[j]
+                y_middle[i + 1, j + 1] = y[i, j + 1] + self.h * self.system_diff_equation(y[i, 1:])[j]
+                y[i + 1, j + 1] = y[i, j + 1] + self.h * self.system_diff_equation((y_middle[i + 1, 1:] + y[i, 1:]) / 2)[j]
         return y
 
     def method_runge_kutta_second(self):
@@ -171,6 +170,8 @@ class BaseMethods:
                                                                 - self.system_diff_equation(y[i - 1, 1:])[j])
 
         return y
+
+    #def implicit_second_adams_method(self):
 
     def calculation_all_methods(self):
         method_euler = self.method_euler()
