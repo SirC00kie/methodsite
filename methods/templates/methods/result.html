@@ -6,14 +6,24 @@
     <h1>Решение системы ОДУ</h1>
     <div class="layer1">
         <h1>Решение уравнений методом {{ methodName }} </h1>
-        <table id="resultTable"></table>
+        <button id="hide-current-method"> Скрыть | Показать</button>
+        <div id="currentMethodTable">
+            <p></p>
+            <table id="resultTable"></table>
+            <p></p>
+        </div>
     </div>
     <div class="layer2">
         <h1>График решения уравнений</h1>
         <button id="hide-chart"> Скрыть | Показать</button>
         <canvas id="myChart"></canvas>
         <h1>Экспериментальные данные</h1>
-        <table id="expTable"></table>
+        <button id="hide-exp"> Скрыть | Показать</button>
+        <div id="experientTable">
+            <p></p>
+            <table id="expTable"></table>
+            <p></p>
+        </div>
         <h1></h1>
         <h1>Сравнение методов</h1>
         <button id="hide-btn"> Скрыть | Показать</button>
@@ -218,7 +228,10 @@
             el.style.display === 'none' ? el.style.display = 'initial' : el.style.display = 'none';
             }
         }
+
+        hide('hide-current-method', 'currentMethodTable');
         hide('hide-btn', 'tables');
+        hide('hide-exp', 'experientTable');
         hide('hide-btn-exp', 'expTables');
         hide('hide-chart', 'myChart');
         hide('hide-btn-error', 'errorTables');
