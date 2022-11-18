@@ -3,7 +3,7 @@ import time
 from django.shortcuts import render, redirect
 from django.views.generic.edit import CreateView
 from django.urls import reverse_lazy, reverse
-from methods.Calculation.method_calculator import MethodCalculator
+from methods.Optimization.optimization_service import OptimizationCalculator
 
 from .file_service import write_to_file, read_from_file, get_json
 from .methods_service import BaseMethods
@@ -37,9 +37,8 @@ def result(request):
     baseMethod.calculation_all_experients()
     baseMethod.calculation_relative_error()
 
-    opt_calculate = MethodCalculator(tables)
-    print(opt_calculate.calculation_for_optimization())
-
+    opt_calculate = OptimizationCalculator(tables)
+    opt_calculate.print_result()
 
     allMethodsData = read_from_file('methods/static/methods/json/all_methods_result.json')
     methods = get_json("methods/static/methods/json/all_methods_result.json")
